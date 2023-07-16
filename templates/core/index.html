@@ -1,0 +1,301 @@
+{% extends 'base.html' %} 
+{% load static %} 
+{% block content %}
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css"
+/>
+
+<section class="mail-sender">
+<div class="container text-center mt-5">
+  <h1>Mail Sender: платформа организации рассылок</h1>
+
+  <div class="mt-3">
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#subscribersModal"
+    >
+      Добавить нового подписчика
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#previewModal"
+    >
+      Организовать рассылку
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#resultsModal"
+      id="get-results"
+    >
+      Проверить эффективность
+    </button>
+  </div>
+
+  <!-- Modal to add subscribers -->
+  <div
+    class="modal fade"
+    id="subscribersModal"
+    tabindex="-1"
+    aria-labelledby="subscribersModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="subscribersModalLabel">
+            Добавить нового подписчика
+          </h2>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form method="POST" id="subscriber-form">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="subscriber-first-name" class="col-form-label-lg"
+                >Имя</label
+              >
+              {{ form.first_name }}
+            </div>
+            <div class="mb-3">
+              <label for="subscriber-last-name" class="col-form-label-lg"
+                >Фамилия</label
+              >
+              {{ form.last_name }}
+            </div>
+            <div class="mb-3">
+              <label for="subscriber-date-of-birth" class="col-form-label-lg"
+                >Дата рождения</label
+              >
+              {{ form.date_of_birth }}
+            </div>
+            <div class="mb-3">
+              <label for="subscriber-email" class="col-form-label-lg"
+                >Почта</label
+              >
+              {{ form.email }}
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Закрыть
+              </button>
+              <button
+                type="submit"
+                id="submit-subscriber-button"
+                class="btn btn-primary"
+              >
+                Добавить
+              </button>
+            </div>
+          </form>
+
+          <div class="alert alert-danger mt-3 d-none" id="form-errors"></div>
+
+          <div class="alert alert-success mt-3 d-none" id="form-success"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal to send emails -->
+
+  <div
+    class="modal fade"
+    id="previewModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="previewModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="subscribersModalLabel">
+            Предпросмотр сообщения
+          </h2>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form method="POST" id="email-form">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="email-title" class="col-form-label-lg"
+                >Тема письма</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="email-title"
+                name="email-title"
+                placeholder="Тема письма"
+              />
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <!-- Left column for HTML input -->
+                <div class="form-group">
+                  <label for="html-input">HTML Code</label>
+                  <textarea
+                    class="form-control"
+                    id="html-input"
+                    rows="5"
+                  ></textarea>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <!-- Right column for preview -->
+                <div id="preview-pane">
+                  <!-- Preview content will be displayed here -->
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="email-option" class="col-form-label-lg"
+                >Выберите опцию</label
+              >
+              <select class="form-select" id="email-option" name="email-option">
+                <option value="now">Отправить сейчас</option>
+                <option value="schedule">Запланировать отправку</option>
+              </select>
+            </div>
+
+            <div id="schedule-options" style="display: none">
+              <div class="mb-3">
+                <label for="email-date" class="col-form-label-lg"
+                  >Дата отправки</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="email-date"
+                  name="email-date"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="email-time" class="col-form-label-lg"
+                  >Время отправки</label
+                >
+                <div class="input-group">
+                  <input
+                    type="time"
+                    class="form-control"
+                    id="email-time"
+                    name="email-time"
+                  />
+                  <div class="input-group-addon">
+                    <i class="glyphicon glyphicon-time"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Закрыть
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                id="submit-email-button"
+              >
+                Отправить
+              </button>
+            </div>
+            <div class="alert alert-danger mt-3 d-none" id="email-errors"></div>
+
+            <div
+              class="alert alert-success mt-3 d-none"
+              id="email-success"
+            ></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal to check results -->
+  <div
+    class="modal fade"
+    id="resultsModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="resultsModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="subscribersModalLabel">
+            Результаты рассылок
+          </h2>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <ul class="list-group"></ul> 
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<script>
+  const saveSubscriberURL = "{% url 'save_subscriber' %}";
+  const getResultURL = "{% url 'get-result' %}";
+  const sendEmailURL = "{% url 'send_email' %}";
+  const csrfToken = "{{ csrf_token }}";
+</script>
+
+<!-- Скрипт для выбора даты -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.js"></script>
+
+<!-- Инициализация выбора даты рождения подписчика -->
+<script src="{% static 'js/core/subscriber_datepicker.js' %}"></script>
+
+<!-- Инициализация выбора даты для рассылки -->
+<script src="{% static 'js/core/email_datepicker.js' %}"></script>
+
+<!-- Обработчик изменения выбранной опции в поле email-option -->
+<script src="{% static 'js/core/email_options_choice.js' %}"></script>
+
+<!-- Получение элементов HTML-ввода и элемента предварительного просмотра -->
+<script src="{% static 'js/core/html_pane_generator.js' %}"></script>
+
+<!-- Функция для получения результатов рассылок -->
+<script src="{% static 'js/core/view_results_request.js' %}"></script>
+
+<!-- Функция для создания рассылки -->
+<script src="{% static 'js/core/send_emails_request.js' %}"></script>
+
+<!-- Функция для создания нового подписчика -->
+<script src="{% static 'js/core/new_subscriber_creation.js' %}"></script>
+
+{% endblock %}
